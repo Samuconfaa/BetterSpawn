@@ -1,0 +1,14 @@
+delay: 5000
+
+teleport:
+  x: 100
+  y: 60
+  z: 100
+  world: "world"
+
+messages:
+  success: "Teletrasporto effettuato con successo!"
+  no-permission: "&cNon hai i permessi per farlo!"
+  no-delay: "Devi aspettare ancora %time% secondi prima di poter teletrasportarti!"
+  reload: "Config ricaricato con successo!"
+  setspawn-success: "Spawn settato con successo!"

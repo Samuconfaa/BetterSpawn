@@ -1,0 +1,31 @@
+name: BetterSpawn
+version: '1.0'
+main: it.samuconfaa.betterSpawn.BetterSpawn
+api-version: '1.21'
+
+commands:
+  spawn:
+    description: Comando principale
+    usage: /spawn <reload|set>
+    permission: betterspawn.spawn
+
+permissions:
+  betterspawn.admin:
+    description: Accesso completo a BetterSpawn
+    default: op
+    children:
+      betterspawn.spawn: true
+      betterspawn.setspawn: true
+      betterspawn.reload: true
+
+  betterspawn.spawn:
+    description: Usa il comando /spawn
+    default: true
+
+  betterspawn.reload:
+    description: Per reloddare il config
+    default: op
+
+  betterspawn.setspawn:
+    description: Per impostare le coordinate di spawn
+    default: op
