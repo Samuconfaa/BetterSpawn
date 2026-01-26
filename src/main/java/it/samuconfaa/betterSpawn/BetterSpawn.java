@@ -14,6 +14,7 @@ public final class BetterSpawn extends JavaPlugin {
     public void onEnable() {
         System.out.println("BetterSpawn enabled!");
         configManager = new ConfigManager(this);
+        spawnCommand = new SpawnCommand(this);
         getCommand("spawn").setExecutor(new SpawnCommand(this));
 
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(spawnCommand.getCountdownTasks(), spawnCommand.getCooldowns()), this);

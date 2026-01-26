@@ -1,6 +1,7 @@
 package it.samuconfaa.betterSpawn.manager;
 
 import it.samuconfaa.betterSpawn.BetterSpawn;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 
@@ -12,6 +13,7 @@ public class ConfigManager {
     }
 
     private int delay;
+    private int cooldown;
     private String success;
     private String noPermission;
     private String noDelay;
@@ -24,6 +26,7 @@ public class ConfigManager {
         plugin.reloadConfig();
 
         delay = plugin.getConfig().getInt("delay");
+        cooldown = plugin.getConfig().getInt("teleport-cooldown");
         success = getConfigString("messages.success");
         noPermission = getConfigString("messages.no-permission");
         noDelay = getConfigString("messages.no-delay");
@@ -50,6 +53,10 @@ public class ConfigManager {
         return delay;
     }
 
+    public int getCooldown(){
+        return cooldown;
+    }
+
     public String getNoPermissionMessage(){
         return noPermission;
     }
@@ -71,11 +78,13 @@ public class ConfigManager {
     }
 
     public Location loadLocation(){
-        int x = plugin.getConfig().getInt("location.x");
-        int y = plugin.getConfig().getInt("location.y");
-        int z = plugin.getConfig().getInt("location.z");
+        double x = plugin.getConfig().getInt("location.x");
+        double y = plugin.getConfig().getInt("location.y");
+        double z = plugin.getConfig().getInt("location.z");
+        float yaw = (float) plugin.getConfig().getInt("location.yaw");
+        float pitch = (float) plugin.getConfig().getInt("location.pitch");
         String world = plugin.getConfig().getString("location.world");
-        return new Location(plugin.getServer().getWorld(world), x, y, z);
+        return new Location(plugin.getServer().getWorld(world), x, y, z, yaw, pitch);
     }
 
     public Location getSpawnLocation(){
@@ -83,11 +92,16 @@ public class ConfigManager {
     }
 
     public void setSpawn(Location location){
-        plugin.getConfig().set("location.x", location.getBlockX());
-        plugin.getConfig().set("location.y", location.getBlockY());
-        plugin.getConfig().set("location.z", location.getBlockZ());
-        plugin.getConfig().set("location.world", location.getWorld().getName());
-        plugin.saveConfig();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            plugin.getConfig().set("location.x", location.getBlockX());
+            plugin.getConfig().set("location.y", location.getBlockY());
+            plugin.getConfig().set("location.z", location.getBlockZ());
+            plugin.getConfig().set("location.yaw", location.getYaw());
+            plugin.getConfig().set("location.pitch", location.getPitch());
+            plugin.getConfig().set("location.world", location.getWorld().getName());
+            plugin.saveConfig();
+            load();
+        });
     }
 
 }

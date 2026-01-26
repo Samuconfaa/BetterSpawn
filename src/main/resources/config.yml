@@ -5,6 +5,8 @@ teleport:
   x: 100
   y: 60
   z: 100
+  yaw: 0
+  pitch: 0
   world: "world"
 
 messages:

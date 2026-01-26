@@ -48,7 +48,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
                     }
                 }
                 cooldowns.put(p.getUniqueId(), System.currentTimeMillis());
-                p.teleport(plugin.getConfigManager().getSpawnLocation());
+                startCooldown(p, plugin.getConfigManager().getCooldown());
             }else{
                 p.sendMessage(plugin.getConfigManager().getNoPermissionMessage());
             }
@@ -78,22 +78,12 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String s, String[] args) {
-        if(args.length == 1){
-            List<String> subCommands = new ArrayList<>();
-
-            if(sender.hasPermission("betterspawn.spawn")){
-                subCommands.add("spawn");
-            }
-            if (sender.hasPermission("betterspawn.set")) {
-                subCommands.add("set");
-            }
-            if (sender.hasPermission("betterspawn.reload")) {
-                subCommands.add("reload");
-            }
-            return subCommands.stream()
-                    .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
-                    .toList();
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            List<String> completions = new ArrayList<>();
+            List<String> commands = List.of("reload", "setspawn");
+            org.bukkit.util.StringUtil.copyPartialMatches(args[0], commands, completions);
+            return completions;
         }
         return List.of();
     }
