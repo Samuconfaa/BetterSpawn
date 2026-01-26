@@ -6,12 +6,16 @@ import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
-public class SpawnCommand implements CommandExecutor {
+public class SpawnCommand implements CommandExecutor, TabCompleter {
+
     private final BetterSpawn plugin;
     public SpawnCommand(BetterSpawn plugin) {
         this.plugin = plugin;
@@ -66,5 +70,26 @@ public class SpawnCommand implements CommandExecutor {
             }
         }
         return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String s, String[] args) {
+        if(args.length == 1){
+            List<String> subCommands = new ArrayList<>();
+
+            if(sender.hasPermission("betterspawn.spawn")){
+                subCommands.add("spawn");
+            }
+            if (sender.hasPermission("betterspawn.set")) {
+                subCommands.add("set");
+            }
+            if (sender.hasPermission("betterspawn.reload")) {
+                subCommands.add("reload");
+            }
+            return subCommands.stream()
+                    .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
+                    .toList();
+        }
+        return List.of();
     }
 }
