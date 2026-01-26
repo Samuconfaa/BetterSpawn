@@ -1,13 +1,13 @@
 package it.samuconfaa.betterSpawn.manager;
 
+import it.samuconfaa.betterSpawn.BetterSpawn;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.plugin.java.JavaPlugin;
 
 public class ConfigManager {
-    private JavaPlugin plugin;
+    private BetterSpawn plugin;
 
-    public ConfigManager(JavaPlugin plugin) {
+    public ConfigManager(BetterSpawn plugin) {
         this.plugin = plugin;
     }
 
@@ -17,6 +17,7 @@ public class ConfigManager {
     private String noDelay;
     private String reload;
     private String setSpawnSuccess;
+    private String playerMoved;
     private Location location;
 
     public void load(){
@@ -28,6 +29,7 @@ public class ConfigManager {
         noDelay = getConfigString("messages.no-delay");
         setSpawnSuccess = getConfigString("messages.setspawn-success");
         reload = getConfigString("messages.reload");
+        playerMoved = getConfigString("messages.player-moved");
 
         location = loadLocation();
     }
@@ -62,6 +64,10 @@ public class ConfigManager {
 
     public String getSetSpawnSuccessMessage(){
         return setSpawnSuccess;
+    }
+
+    public String getPlayerMovedMessage(){
+        return playerMoved;
     }
 
     public Location loadLocation(){

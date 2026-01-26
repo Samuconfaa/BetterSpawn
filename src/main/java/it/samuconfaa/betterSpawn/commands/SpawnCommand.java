@@ -2,12 +2,16 @@ package it.samuconfaa.betterSpawn.commands;
 
 import it.samuconfaa.betterSpawn.BetterSpawn;
 import it.samuconfaa.betterSpawn.manager.ConfigManager;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +26,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
     }
 
     private final HashMap<UUID, Long> cooldowns = new HashMap<>();
+    private final HashMap<UUID, BukkitTask> countdownTasks = new HashMap<>();
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
@@ -92,4 +97,45 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
         }
         return List.of();
     }
+
+    private void startCooldown(Player p, int seconds){
+        Location locIniziale = p.getLocation().clone(); //posizione iniziale
+        final BukkitTask[] taskHolder = new BukkitTask[1]; //per eliminare il task, dentro la lambda deve essere final
+        final int[] timeLeft = {seconds}; //final perchè richiesto dalla lambda. traccia quanto rimane
+
+        taskHolder[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+
+            Location current = p.getLocation();
+            if (current.getBlockX() != locIniziale.getBlockX() ||
+                current.getBlockY() != locIniziale.getBlockY() ||
+                current.getBlockZ() != locIniziale.getBlockZ()){
+                p.sendMessage(plugin.getConfigManager().getPlayerMovedMessage());
+                countdownTasks.remove(p.getUniqueId()); //elimino il task dall'hashmap
+                taskHolder[0].cancel();
+                return;
+            }
+            if(timeLeft[0] <= 0){ //se ho aspettato X secondi
+                p.teleport(plugin.getConfigManager().getSpawnLocation()); //p teletrasportato
+                p.sendMessage(plugin.getConfigManager().getSuccessMessage()); //messaggio di successo
+                countdownTasks.remove(p.getUniqueId()); //elimino il task
+                cooldowns.put(p.getUniqueId(), System.currentTimeMillis()); //aggiorno hashmap del cooldwon
+                taskHolder[0].cancel();
+            }else{ //se non ho ancora aspettato X secondi
+                p.sendTitle(String.valueOf(timeLeft[0]), "", 0, 20, 0); //messaggio a schermo
+                timeLeft[0]--; //contratore decrementato
+            }
+        }, 0L, 20L);
+
+        countdownTasks.put(p.getUniqueId(), taskHolder[0]); //lo salvo per annullarlo se il player si muove
+    }
+
+    public HashMap<UUID, BukkitTask> getCountdownTasks() {
+        return countdownTasks;
+    }
+
+    public HashMap<UUID, Long> getCooldowns() {
+        return cooldowns;
+    }
+
+
 }
