@@ -11,25 +11,24 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class PlayerQuitListener implements Listener {
-    private final HashMap<UUID, BukkitTask> countdownTasks;
-    private final HashMap<UUID, Long> cooldowns;
 
-    public PlayerQuitListener(HashMap<UUID, BukkitTask> countdownTasks, HashMap<UUID, Long> cooldowns) {
-        this.countdownTasks = countdownTasks;
-        this.cooldowns = cooldowns;
+    private final BetterSpawn plugin;
+
+    public PlayerQuitListener(BetterSpawn plugin) {
+        this.plugin = plugin;
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e){
         UUID uuid = e.getPlayer().getUniqueId();
 
-        if(countdownTasks.containsKey(uuid)){
-            countdownTasks.get(uuid).cancel();
-            countdownTasks.remove(uuid);
+        if(plugin.getCountdownTasks().containsKey(uuid)){
+            plugin.getCountdownTasks().get(uuid).cancel();
+            plugin.getCountdownTasks().remove(uuid);
         }
 
-        if(cooldowns.containsKey(uuid)){
-            cooldowns.remove(uuid);
+        if(plugin.getCooldowns().containsKey(uuid)){
+            plugin.getCooldowns().remove(uuid);
         }
     }
 }

@@ -11,6 +11,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
@@ -25,8 +26,6 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
         this.plugin = plugin;
     }
 
-    private final HashMap<UUID, Long> cooldowns = new HashMap<>();
-    private final HashMap<UUID, BukkitTask> countdownTasks = new HashMap<>();
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
@@ -36,9 +35,9 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
         }
         if(args.length == 0){
             if(p.hasPermission("betterspawn.spawn")){
-                if(cooldowns.containsKey(p.getUniqueId())){
+                if(plugin.getCooldowns().containsKey(p.getUniqueId())){
                     long now = System.currentTimeMillis();
-                    long last = cooldowns.get(p.getUniqueId());
+                    long last = plugin.getCooldowns().get(p.getUniqueId());
                     long diff = now - last;
                     int delay = plugin.getConfigManager().getDelay();
                     if(diff < delay) {
@@ -47,7 +46,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
                         return true;
                     }
                 }
-                cooldowns.put(p.getUniqueId(), System.currentTimeMillis());
+                plugin.getCooldowns().put(p.getUniqueId(), System.currentTimeMillis());
                 startCooldown(p, plugin.getConfigManager().getCooldown());
             }else{
                 p.sendMessage(plugin.getConfigManager().getNoPermissionMessage());
@@ -88,44 +87,44 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
         return List.of();
     }
 
-    private void startCooldown(Player p, int seconds){
-        Location locIniziale = p.getLocation().clone(); //posizione iniziale
-        final BukkitTask[] taskHolder = new BukkitTask[1]; //per eliminare il task, dentro la lambda deve essere final
-        final int[] timeLeft = {seconds}; //final perchè richiesto dalla lambda. traccia quanto rimane
+    private void startCooldown(Player p, int seconds) {
+        Location locIniziale = p.getLocation().clone();
 
-        taskHolder[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        BukkitTask task = new BukkitRunnable() {
+            int timeLeft = seconds;
 
-            Location current = p.getLocation();
-            if (current.getBlockX() != locIniziale.getBlockX() ||
-                current.getBlockY() != locIniziale.getBlockY() ||
-                current.getBlockZ() != locIniziale.getBlockZ()){
-                p.sendMessage(plugin.getConfigManager().getPlayerMovedMessage());
-                countdownTasks.remove(p.getUniqueId()); //elimino il task dall'hashmap
-                taskHolder[0].cancel();
-                return;
+            @Override
+            public void run() {
+                Location current = p.getLocation();
+
+                // controllo movimento
+                if (current.getBlockX() != locIniziale.getBlockX() ||
+                        current.getBlockY() != locIniziale.getBlockY() ||
+                        current.getBlockZ() != locIniziale.getBlockZ()) {
+
+                    p.sendMessage(plugin.getConfigManager().getPlayerMovedMessage());
+                    plugin.getCountdownTasks().remove(p.getUniqueId());
+                    cancel(); // ferma il task se si muove
+                    return;
+                }
+
+                if (timeLeft <= 0) {
+                    p.teleport(plugin.getConfigManager().getSpawnLocation());
+                    p.sendMessage(plugin.getConfigManager().getSuccessMessage());
+                    plugin.getCountdownTasks().remove(p.getUniqueId());
+                    plugin.getCooldowns().put(p.getUniqueId(), System.currentTimeMillis());
+                    cancel(); //cancello il task se tp
+                } else {
+                    p.sendTitle(String.valueOf(timeLeft), "", 0, 20, 0);
+                    timeLeft--;
+                }
             }
-            if(timeLeft[0] <= 0){ //se ho aspettato X secondi
-                p.teleport(plugin.getConfigManager().getSpawnLocation()); //p teletrasportato
-                p.sendMessage(plugin.getConfigManager().getSuccessMessage()); //messaggio di successo
-                countdownTasks.remove(p.getUniqueId()); //elimino il task
-                cooldowns.put(p.getUniqueId(), System.currentTimeMillis()); //aggiorno hashmap del cooldwon
-                taskHolder[0].cancel();
-            }else{ //se non ho ancora aspettato X secondi
-                p.sendTitle(String.valueOf(timeLeft[0]), "", 0, 20, 0); //messaggio a schermo
-                timeLeft[0]--; //contratore decrementato
-            }
-        }, 0L, 20L);
+        }.runTaskTimer(plugin, 0L, 20L);
 
-        countdownTasks.put(p.getUniqueId(), taskHolder[0]); //lo salvo per annullarlo se il player si muove
+        plugin.getCountdownTasks().put(p.getUniqueId(), task);
     }
-
-    public HashMap<UUID, BukkitTask> getCountdownTasks() {
-        return countdownTasks;
-    }
-
-    public HashMap<UUID, Long> getCooldowns() {
-        return cooldowns;
-    }
-
 
 }
+
+
+
